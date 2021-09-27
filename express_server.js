@@ -23,7 +23,10 @@ app.get("/urls", (req, res) => {
 
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
-  res.send(generateRandomString());         // Respond with 'Ok' (we will replace this)
+
+  let randomString = generateRandomString();
+  urlDatabase[randomString] = req.body.longURL;
+  res.redirect(`http://localhost:3000/urls/${randomString}`);
 });
 
 app.get("/hello", (req, res) => {
@@ -40,6 +43,13 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app.get("/u/:shortURL", (req, res) => {
+
+  const codeToSearch = req.params.shortURL;
+  const longURL = urlDatabase[codeToSearch];
+  res.redirect(longURL);
+});
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
@@ -48,7 +58,7 @@ function generateRandomString() {
 
   let randomString = "";
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 6; i++) {
 
     if (Math.floor((Math.random() * 10) + 1) % 2 === 0) {
       randomString = randomString + String.fromCharCode(Math.floor(Math.random() * (122 - 97) + 97));
