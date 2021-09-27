@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/kenny-tse/tinyapp/issues"
   },
-  "homepage": "https://github.com/kenny-tse/tinyapp#readme"
+  "homepage": "https://github.com/kenny-tse/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
