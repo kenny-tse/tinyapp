@@ -26,7 +26,7 @@ app.post("/urls", (req, res) => {
 
   let randomString = generateRandomString();
   urlDatabase[randomString] = req.body.longURL;
-  res.redirect(`http://localhost:3000/urls/${randomString}`);
+  res.redirect(`http://localhost:${PORT}/urls/${randomString}`);
 });
 
 app.get("/hello", (req, res) => {
@@ -43,11 +43,21 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.get("/u/:shortURL", (req, res) => {
+app.post("/urls/:shortURL/delete", (req, res) => {
+  console.log(req.params)
+  delete urlDatabase[req.params.shortURL];
+  res.redirect("/urls");
+});
 
+app.get("/u/:shortURL", (req, res) => {
   const codeToSearch = req.params.shortURL;
   const longURL = urlDatabase[codeToSearch];
   res.redirect(longURL);
+});
+
+app.post("/urls/:id", (req, res) => {
+  urlDatabase[req.params.id] = req.body.longURL;
+  res.redirect("/urls");
 });
 
 app.listen(PORT, () => {
