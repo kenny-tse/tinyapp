@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const PORT = 3000; // default port 8080
+const PORT = 8080; // default port 8080
 
 const cookieParser = require('cookie-parser')
 app.use(cookieParser());
@@ -10,8 +10,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "121"
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "111"
+  }
 };
 
 const users = {
@@ -28,13 +34,14 @@ const users = {
 }
 
 app.get("/", (req, res) => {
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 app.get("/urls", (req, res) => {
   if (users[req.cookies["user_id"]] === undefined) {
-    const templateVars = { urls: urlDatabase, userObject: false };
-    res.render("urls_index", templateVars);
+    // const templateVars = { urls: urlDatabase, userObject: false };
+    // res.render("urls_index", templateVars);
+    res.redirect("/login");
     return
   }
   const templateVars = { urls: urlDatabase, userObject: users[req.cookies["user_id"]] };
@@ -42,16 +49,20 @@ app.get("/urls", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
+  if (users[req.cookies["user_id"]] === undefined) {
+    const templateVars = { urls: urlDatabase, userObject: false };
+    res.redirect("/login");
+    return
+  }
   let randomString = generateRandomString();
-  urlDatabase[randomString] = req.body.longURL;
+  urlDatabase[randomString] = { userID: req.cookies["user_id"], longURL: req.body.longURL };
   res.redirect(`http://localhost:${PORT}/urls/${randomString}`);
 });
 
 app.get("/urls/new", (req, res) => {
   if (users[req.cookies["user_id"]] === undefined) {
     const templateVars = { urls: urlDatabase, userObject: false };
-    res.render("urls_new", templateVars);
+    res.redirect("/login");
     return
   }
   const templateVars = { userObject: users[req.cookies["user_id"]] };
@@ -59,7 +70,13 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], userObject: users[req.cookies["user_id"]] };
+  const templateVars =
+  {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL].longURL,
+    userObject: users[req.cookies["user_id"]]
+  };
+
   res.render("urls_show", templateVars);
 });
 
@@ -101,8 +118,13 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   const codeToSearch = req.params.shortURL;
-  const longURL = urlDatabase[codeToSearch];
-  res.redirect(longURL);
+
+  if (!urlDatabase[codeToSearch]) {
+    return res.status(404).send("Code does not exist!");
+  }
+
+  const longURLToRedirect = urlDatabase[codeToSearch]["longURL"];
+  res.redirect(longURLToRedirect);
 });
 
 app.post("/urls/:id", (req, res) => {
