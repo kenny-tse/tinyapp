@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const PORT = 8080; // default port 8080
+const PORT = 3000; // default port 8080
 
 const cookieParser = require('cookie-parser')
 app.use(cookieParser());
@@ -123,11 +123,11 @@ app.post("/login", (req, res) => {
   console.log(userToFind);
 
   if (!userToFind) {
-    return res.status(400).send('User not found!')
+    return res.status(403).send('User not found!')
   }
 
   if (userToFind.password !== passwordToLog) {
-    return res.status(400).send('Password does not match!')
+    return res.status(403).send('Password does not match!')
   }
 
   res.cookie("user_id", userToFind.id);
