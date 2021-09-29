@@ -15,12 +15,12 @@ const urlDatabase = {
 };
 
 const users = {
-  "userRandomID": {
+  "111": {
     id: "111",
     email: "1234@number.com",
     password: "123"
   },
-  "user2RandomID": {
+  "222": {
     id: "222",
     email: "aaa@bbb.com",
     password: "abc"
@@ -72,6 +72,16 @@ app.post("/register", (req, res) => {
   const emailToAdd = req.body.email;
   const passwordToAdd = req.body.password;
 
+  if (!emailToAdd || !passwordToAdd) {
+    return res.status(400).send("email or password cannot be blank");
+  }
+
+  const userToFind = findUser(emailToAdd);
+
+  if (userToFind) {
+    return res.status(400).send('Email is already in use!')
+  }
+
   const randomId = generateRandomString();
   users[randomId] = {
     id: randomId,
@@ -80,7 +90,6 @@ app.post("/register", (req, res) => {
   }
 
   res.cookie("user_id", randomId);
-
   res.redirect("/urls");
 });
 
@@ -102,8 +111,31 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
+  const emailToLog = req.body.email;
+  const passwordToLog = req.body.password;
+
+  if (!emailToLog || !passwordToLog) {
+    return res.status(400).send("email or password cannot be blank");
+  }
+
+  const userToFind = findUser(emailToLog);
+
+  console.log(userToFind);
+
+  if (!userToFind) {
+    return res.status(400).send('User not found!')
+  }
+
+  if (userToFind.password !== passwordToLog) {
+    return res.status(400).send('Password does not match!')
+  }
+
+  res.cookie("user_id", userToFind.id);
   res.redirect("/urls");
+});
+
+app.get("/login", (req, res) => {
+  res.render("login");
 });
 
 app.post("/logout", (req, res) => {
@@ -115,18 +147,27 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-function generateRandomString() {
+const generateRandomString = function () {
 
   let randomString = "";
 
   for (let i = 0; i < 6; i++) {
-
     if (Math.floor((Math.random() * 10) + 1) % 2 === 0) {
       randomString = randomString + String.fromCharCode(Math.floor(Math.random() * (122 - 97) + 97));
     } else {
       randomString = randomString + String.fromCharCode(Math.floor(Math.random() * (57 - 48) + 48));
     }
   }
-
   return randomString;
+}
+
+const findUser = function (email) {
+
+  for (const userId in users) {
+    const user = users[userId];
+    if (user.email === email) {
+      return user
+    }
+  }
+  return false;
 }
