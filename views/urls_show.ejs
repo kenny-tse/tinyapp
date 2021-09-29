@@ -10,19 +10,7 @@
 
 <body>
   <header>
-    <nav class="navbar navbar-expand-md navbar-dark bg-success">
-      <a class="navbar-brand" href="/urls">TinyApp</a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup"
-        aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-        <div class="navbar-nav">
-          <a class="nav-item nav-link" href="/urls">My URLs</a>
-          <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        </div>
-      </div>
-    </nav>
+    <%- include('partials/_header') %>
   </header>
   <div class="card text-center">
     <div class="card-header"></div>
@@ -33,17 +21,18 @@
           <%= shortURL %>
         </a></p>
     </div>
+
     <div class="card-footer text-muted">
-      <label for="longURL" font-size:40px>Edit</label>
-      <form class="form-inline" action="/urls/<%= shortURL %>" method="POST">
+      <label for="longURL" style='font-size:25px; font-weight: bold'>Edit</label>
+      <form class="mx-auto" action="/urls/<%= shortURL %>" method="POST">
         <div class="form-group mb-2">
           <label for="longURL">New URL:</label>
-          <input class="form-control" type="text" name="longURL" placeholder="http://"
-            style="width: 300px; margin: 1em">
+          <input class="mx-auto" type="text" name="longURL" placeholder="http://" style="width: 300px; margin: 1em">
           <button type="submit" class="btn btn-primary">Submit</button>
         </div>
       </form>
     </div>
+
   </div>
 
   <!-- Bootstrap JS -->

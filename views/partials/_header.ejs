@@ -6,9 +6,27 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
+      <div class="navbar-nav" style='width: 100%'>
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+        <% if(username ){%>
+          <div>
+            <form class="form-inline" action="/logout" method="POST">
+              <div class="form-group mb-2">
+                <label>Logged In As: <%= username %>! </label>
+                <button type="submit">Logout</button>
+              </div>
+            </form>
+          </div>
+          <%} else {%>
+            <form class="form-inline" action="/login" method="POST" style='margin-left:auto'>
+              <div class="form-group mb-2">
+                <input class="form-control" type="text" name="username" placeholder="Username"
+                  style="width: 250px; margin: 1em">
+                <button type="submit">Login</button>
+              </div>
+            </form>
+            <%}%>
       </div>
     </div>
   </nav>
