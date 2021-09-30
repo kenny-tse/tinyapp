@@ -7,6 +7,8 @@ app.use(cookieParser());
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 
+const bcrypt = require('bcryptjs');
+
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
@@ -24,12 +26,12 @@ const users = {
   "111": {
     id: "111",
     email: "1234@number.com",
-    password: "123"
+    password: bcrypt.hashSync("123", 10)
   },
   "222": {
     id: "222",
     email: "aaa@bbb.com",
-    password: "abc"
+    password: bcrypt.hashSync("abc", 10)
   }
 };
 
@@ -104,15 +106,16 @@ app.post("/register", (req, res) => {
     return res.status(400).send('Email is already in use!');
   }
 
+  const hashedPassword = bcrypt.hashSync(passwordToAdd, 10);
+
   const randomId = generateRandomString();
   users[randomId] = {
     id: randomId,
     email: emailToAdd,
-    password: passwordToAdd
+    password: hashedPassword
   };
 
-  res.cookie("user_id", randomId);
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
@@ -160,7 +163,8 @@ app.post("/login", (req, res) => {
     return res.status(403).send('User not found!');
   }
 
-  if (userToFind.password !== passwordToLog) {
+
+  if (!bcrypt.compareSync(passwordToLog, userToFind.password)) {
     return res.status(403).send('Password does not match!');
   }
 
