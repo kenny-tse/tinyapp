@@ -1,15 +1,19 @@
 const express = require("express");
 const app = express();
-const PORT = 3000; // default port 8080
+const PORT = 8080; // default port 8080
 
-const cookieParser = require('cookie-parser');
-app.use(cookieParser());
+app.set('view engine', 'ejs');
+
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const bcrypt = require('bcryptjs');
 
-app.set('view engine', 'ejs');
+const cookieSession = require('cookie-session')
+app.use(cookieSession({
+  name: 'session',
+  keys: ['my secret key'],
+}))
 
 const urlDatabase = {
   b6UTxQ: {
@@ -36,42 +40,50 @@ const users = {
 };
 
 app.get("/", (req, res) => {
+  console.log("1 - GET /")
   res.redirect("/login");
 });
 
 app.get("/urls", (req, res) => {
-  if (users[req.cookies["user_id"]] === undefined) {
+  console.log("2 - GET /urls")
+  if (users[req.session.user_id] === undefined) {
     res.redirect("/login");
     return;
   }
-  let linksToPass = urlsForUser(req.cookies["user_id"]);
-  const templateVars = { urls: linksToPass, userObject: users[req.cookies["user_id"]] };
+  let linksToPass = urlsForUser(req.session.user_id);
+  const templateVars = { urls: linksToPass, userObject: users[req.session.user_id] };
   res.render("urls_index", templateVars);
 });
 
 app.post("/urls", (req, res) => {
-  if (users[req.cookies["user_id"]] === undefined) {
+  console.log("3 - POST /urls")
+  if (users[req.session.user_id] === undefined) {
     const templateVars = { urls: urlDatabase, userObject: false };
     res.redirect("/login");
     return;
   }
   let randomString = generateRandomString();
-  urlDatabase[randomString] = { userID: req.cookies["user_id"], longURL: req.body.longURL };
-  res.redirect(`http://localhost:${PORT}/urls/${randomString}`);
+  urlDatabase[randomString] = { userID: req.session.user_id, longURL: req.body.longURL };
+  res.redirect(`/urls/${randomString}`);
 });
 
 app.get("/urls/new", (req, res) => {
-  if (users[req.cookies["user_id"]] === undefined) {
+  console.log("4 - GET /urls/new")
+  if (users[req.session.user_id] === undefined) {
     const templateVars = { urls: urlDatabase, userObject: false };
     res.redirect("/login");
     return;
   }
-  const templateVars = { userObject: users[req.cookies["user_id"]] };
+
+
+  const templateVars = { userObject: users[req.session.user_id] };
+  console.log(templateVars)
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  if (users[req.cookies["user_id"]] === undefined) {
+  console.log("5 - GET /urls/:shortURL")
+  if (users[req.session.user_id] === undefined) {
     const templateVars = { urls: urlDatabase, userObject: false };
     res.redirect("/login");
     return;
@@ -80,19 +92,22 @@ app.get("/urls/:shortURL", (req, res) => {
   {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
-    userObject: users[req.cookies["user_id"]]
+    userObject: users[req.session.user_id]
   };
+
+  console.log(templateVars);
 
   res.render("urls_show", templateVars);
 });
 
 app.get("/register", (req, res) => {
-  const templateVariable = { userObject: users[req.cookies["user_id"]] }
+  console.log("6 - GET /register")
+  const templateVariable = { userObject: users[req.session.user_id] }
   res.render("register", templateVariable);
 });
 
 app.post("/register", (req, res) => {
-
+  console.log("7 - POST /register")
   const emailToAdd = req.body.email;
   const passwordToAdd = req.body.password;
 
@@ -119,16 +134,20 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-
-  if (urlDatabase[req.params.shortURL].userID !== req.cookies["user_id"]) {
+  console.log("8 - POST /urls/:shortURL/delete")
+  console.log(urlDatabase)
+  if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) {
     return res.status(401).send("You are unautherized to do that.");
   }
 
   delete urlDatabase[req.params.shortURL];
+
+  console.log(urlDatabase)
   res.redirect("/urls");
 });
 
 app.get("/u/:shortURL", (req, res) => {
+  console.log("9 - GET /u/:shortURL")
   const codeToSearch = req.params.shortURL;
 
   if (!urlDatabase[codeToSearch]) {
@@ -140,8 +159,9 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
+  console.log("10 - POST /urls/:id")
 
-  if (urlDatabase[req.params.id].userID !== req.cookies["user_id"]) {
+  if (urlDatabase[req.params.id].userID !== req.session.user_id) {
     return res.status(401).send("You are unautherized to do that.");
   }
 
@@ -150,6 +170,7 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
+  console.log("11 - POST /login")
   const emailToLog = req.body.email;
   const passwordToLog = req.body.password;
 
@@ -168,18 +189,23 @@ app.post("/login", (req, res) => {
     return res.status(403).send('Password does not match!');
   }
 
-  res.cookie("user_id", userToFind.id);
+  req.session.user_id = userToFind.id;
   res.redirect("/urls");
 });
 
 app.get("/login", (req, res) => {
-  const templateVariable = { userObject: users[req.cookies["user_id"]] }
+
+  console.log("12 - GET /login")
+  const templateVariable = { userObject: users[req.session.user_id] }
   res.render("login", templateVariable);
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
-  res.redirect("/urls");
+  console.log("13 - POST /logout")
+  res.clearCookie('session')
+  res.clearCookie('session.sig')
+  // res.clearCookie("user_id");
+  res.redirect("/login");
 });
 
 app.listen(PORT, () => {
