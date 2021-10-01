@@ -70,7 +70,7 @@ app.get("/", (req, res) => {
 
 app.get("/urls", (req, res) => {
   if (!req.session.user_id) {
-    return res.status(401).send("You are unautherized to be on this page!");
+    return res.status(401).send("You are unauthorized to be on this page!");
   }
   let linksToPass = urlsForUser(req.session.user_id, urlDatabase);
   const templateVars = { urls: linksToPass, userObject: users[req.session.user_id] };
@@ -90,7 +90,7 @@ app.post("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   if (!req.session.user_id) {
-    return res.status(401).send("You are unautherized to do that. Please login!");
+    return res.status(401).send("You are unauthorized to do that. Please login!");
     return;
   }
   const templateVars = { userObject: users[req.session.user_id] };
@@ -99,7 +99,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   if (!req.session.user_id) {
-    return res.status(401).send("You are unautherized to do that.");
+    return res.status(401).send("You are unauthorized to do that.");
   }
 
   if (!urlDatabase[req.params.shortURL]) {
@@ -107,7 +107,7 @@ app.get("/urls/:shortURL", (req, res) => {
   }
 
   if (req.session.user_id !== urlDatabase[req.params.shortURL].userID) {
-    return res.status(401).send("You are unautherized to do that.");
+    return res.status(401).send("You are unauthorized to do that.");
   }
 
   const templateVars =
@@ -156,11 +156,11 @@ app.post("/register", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   if (!req.session.user_id) {
-    return res.status(401).send("You are unautherized to do that. Please login.");
+    return res.status(401).send("You are unauthorized to do that. Please login.");
   }
 
   if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) {
-    return res.status(401).send("You are unautherized to do that. You do not own this shortURL. Please login to the relevant account.");
+    return res.status(401).send("You are unauthorized to do that. You do not own this shortURL. Please login to the relevant account.");
   }
 
   delete urlDatabase[req.params.shortURL];
@@ -182,7 +182,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/urls/:id", (req, res) => {
 
   if (urlDatabase[req.params.id].userID !== req.session.user_id) {
-    return res.status(401).send("You are unautherized to do that.");
+    return res.status(401).send("You are unauthorized to do that.");
   }
 
   urlDatabase[req.params.id].longURL = req.body.longURL;
