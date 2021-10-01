@@ -99,7 +99,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   if (!req.session.user_id) {
-    return res.status(401).send("You are unauthorized to do that.");
+    return res.status(401).send("You are unauthorized to do that. Please login!");
   }
 
   if (!urlDatabase[req.params.shortURL]) {
@@ -107,7 +107,7 @@ app.get("/urls/:shortURL", (req, res) => {
   }
 
   if (req.session.user_id !== urlDatabase[req.params.shortURL].userID) {
-    return res.status(401).send("You are unauthorized to do that.");
+    return res.status(401).send("You are unauthorized to do that. Please login to the relevant account!");
   }
 
   const templateVars =
@@ -160,7 +160,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 
   if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) {
-    return res.status(401).send("You are unauthorized to do that. You do not own this shortURL. Please login to the relevant account.");
+    return res.status(401).send("You are unauthorized to do that. Please login to the relevant account.");
   }
 
   delete urlDatabase[req.params.shortURL];
@@ -182,7 +182,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/urls/:id", (req, res) => {
 
   if (urlDatabase[req.params.id].userID !== req.session.user_id) {
-    return res.status(401).send("You are unauthorized to do that.");
+    return res.status(401).send("You are unauthorized to do that. Please login to the relevant account!");
   }
 
   urlDatabase[req.params.id].longURL = req.body.longURL;
