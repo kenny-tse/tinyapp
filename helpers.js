@@ -21,4 +21,18 @@ const urlsForUser = function (id, database) {
   return objectToReturn;
 };
 
-module.exports = { getUserByEmail, urlsForUser };
+const generateRandomString = function () {
+
+  let randomString = "";
+
+  for (let i = 0; i < 6; i++) {
+    if (Math.floor((Math.random() * 10) + 1) % 2 === 0) {
+      randomString = randomString + String.fromCharCode(Math.floor(Math.random() * (122 - 97) + 97));
+    } else {
+      randomString = randomString + String.fromCharCode(Math.floor(Math.random() * (57 - 48) + 48));
+    }
+  }
+  return randomString;
+};
+
+module.exports = { getUserByEmail, urlsForUser, generateRandomString };

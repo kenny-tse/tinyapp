@@ -15,7 +15,7 @@ app.use(cookieSession({
   keys: ['my secret key']
 }));
 
-const { getUserByEmail, urlsForUser } = require("./helpers");
+const { getUserByEmail, urlsForUser, generateRandomString } = require("./helpers");
 
 const urlDatabase = {
   b6UTxQ: {
@@ -79,8 +79,7 @@ app.get("/urls", (req, res) => {
 
 app.post("/urls", (req, res) => {
   if (!req.session.user_id) {
-    res.redirect("/login");
-    return;
+    return res.redirect("/login");
   }
 
   let randomString = generateRandomString();
@@ -163,18 +162,18 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 
   delete urlDatabase[req.params.shortURL];
-
   res.redirect("/urls");
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const codeToSearch = req.params.shortURL;
+  const shortURL = req.params.shortURL;
 
-  if (!urlDatabase[codeToSearch]) {
+  if (!urlDatabase[shortURL]) {
     return res.status(404).send("This shortURL does not exist!");
   }
 
-  const longURLToRedirect = urlDatabase[codeToSearch]["longURL"];
+  const longURLToRedirect = urlDatabase[shortURL].longURL;
+  console.log("longURL to redirect: ", longURLToRedirect)
   res.redirect(longURLToRedirect);
 });
 
@@ -202,7 +201,6 @@ app.post("/login", (req, res) => {
     return res.status(403).send('User not found!');
   }
 
-
   if (!bcrypt.compareSync(passwordToLog, userToFind.password)) {
     return res.status(403).send('Password does not match!');
   }
@@ -226,16 +224,3 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-const generateRandomString = function () {
-
-  let randomString = "";
-
-  for (let i = 0; i < 6; i++) {
-    if (Math.floor((Math.random() * 10) + 1) % 2 === 0) {
-      randomString = randomString + String.fromCharCode(Math.floor(Math.random() * (122 - 97) + 97));
-    } else {
-      randomString = randomString + String.fromCharCode(Math.floor(Math.random() * (57 - 48) + 48));
-    }
-  }
-  return randomString;
-};
