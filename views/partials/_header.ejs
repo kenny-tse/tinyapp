@@ -8,8 +8,8 @@
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav" style='width: 100%'>
         <a class="nav-item nav-link" href="/urls">My URLs</a>
-        <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
         <% if(userObject){%>
+          <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
           <div style='margin-left:auto'>
             <form class="form-inline" action="/logout" method="POST">
               <div class="form-group mb-2">

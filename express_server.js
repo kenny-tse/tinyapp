@@ -23,11 +23,27 @@ const urlDatabase = {
     userID: "222"
   },
   i3BoGr: {
-    longURL: "https://www.google.ca",
+    longURL: "https://www.google.com/",
     userID: "111"
   },
   d6ujk8: {
-    longURL: "https://www.wikipedia.org",
+    longURL: "https://www.wikipedia.org/",
+    userID: "111"
+  },
+  g7red3: {
+    longURL: "https://developer.mozilla.org/en-US/",
+    userID: "111"
+  },
+  o4j6t: {
+    longURL: "https://www.lighthouselabs.ca/",
+    userID: "111"
+  },
+  higt90: {
+    longURL: "https://ca.yahoo.com/",
+    userID: "111"
+  },
+  hfer33: {
+    longURL: "https://www.youtube.com/",
     userID: "111"
   }
 };
@@ -35,7 +51,7 @@ const urlDatabase = {
 const users = {
   "111": {
     id: "111",
-    email: "1234@number.com",
+    email: "John_bob@gmail.com",
     password: bcrypt.hashSync("123", 10)
   },
   "222": {
@@ -46,13 +62,15 @@ const users = {
 };
 
 app.get("/", (req, res) => {
-  res.redirect("/login");
+  if (!req.session.user_id) {
+    return res.redirect("/login");
+  }
+  res.redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
   if (!req.session.user_id) {
-    res.redirect("/login");
-    return;
+    return res.status(401).send("You are unautherized to be on this page!");
   }
   let linksToPass = urlsForUser(req.session.user_id, urlDatabase);
   const templateVars = { urls: linksToPass, userObject: users[req.session.user_id] };
@@ -72,7 +90,7 @@ app.post("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   if (!req.session.user_id) {
-    res.redirect("/login");
+    return res.status(401).send("You are unautherized to do that. Please login!");
     return;
   }
   const templateVars = { userObject: users[req.session.user_id] };
@@ -81,8 +99,11 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   if (!req.session.user_id) {
-    res.redirect("/login");
-    return;
+    return res.status(401).send("You are unautherized to do that.");
+  }
+
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.status(404).send("This short URL was not found!");
   }
 
   if (req.session.user_id !== urlDatabase[req.params.shortURL].userID) {
@@ -100,6 +121,9 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
+  if (req.session.user_id) {
+    return res.redirect("/urls");
+  }
   const templateVariable = { userObject: users[req.session.user_id] };
   res.render("register", templateVariable);
 });
@@ -132,12 +156,11 @@ app.post("/register", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   if (!req.session.user_id) {
-    res.redirect("/login");
-    return;
+    return res.status(401).send("You are unautherized to do that. Please login.");
   }
 
   if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) {
-    return res.status(401).send("You are unautherized to do that.");
+    return res.status(401).send("You are unautherized to do that. You do not own this shortURL. Please login to the relevant account.");
   }
 
   delete urlDatabase[req.params.shortURL];
@@ -149,7 +172,7 @@ app.get("/u/:shortURL", (req, res) => {
   const codeToSearch = req.params.shortURL;
 
   if (!urlDatabase[codeToSearch]) {
-    return res.status(404).send("Code does not exist!");
+    return res.status(404).send("This shortURL does not exist!");
   }
 
   const longURLToRedirect = urlDatabase[codeToSearch]["longURL"];
@@ -197,7 +220,7 @@ app.get("/login", (req, res) => {
 app.post("/logout", (req, res) => {
   res.clearCookie('session');
   res.clearCookie('session.sig');
-  res.redirect("/login");
+  res.redirect("/urls");
 });
 
 app.listen(PORT, () => {
