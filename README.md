@@ -4,7 +4,12 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
+Over here is the page with all the long URLs that you've shortened!
+
 !["screenshot description"](https://github.com/kenny-tse/tinyapp/blob/master/docs/URLSPage.PNG?raw=true)
+
+
+If you don't like or want that website anymore, simply change it!
 
 !["screenshot description"](https://github.com/kenny-tse/tinyapp/blob/master/docs/Edit%20Page.PNG?raw=true)
 
