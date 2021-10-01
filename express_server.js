@@ -9,11 +9,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const bcrypt = require('bcryptjs');
 
-const cookieSession = require('cookie-session')
+const cookieSession = require('cookie-session');
 app.use(cookieSession({
   name: 'session',
-  keys: ['my secret key'],
-}))
+  keys: ['my secret key']
+}));
+
+const { getUserByEmail, urlsForUser } = require("./helpers");
 
 const urlDatabase = {
   b6UTxQ: {
@@ -22,6 +24,10 @@ const urlDatabase = {
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
+    userID: "111"
+  },
+  d6ujk8: {
+    longURL: "https://www.wikipedia.org",
     userID: "111"
   }
 };
@@ -40,54 +46,49 @@ const users = {
 };
 
 app.get("/", (req, res) => {
-  console.log("1 - GET /")
   res.redirect("/login");
 });
 
 app.get("/urls", (req, res) => {
-  console.log("2 - GET /urls")
-  if (users[req.session.user_id] === undefined) {
+  if (!req.session.user_id) {
     res.redirect("/login");
     return;
   }
-  let linksToPass = urlsForUser(req.session.user_id);
+  let linksToPass = urlsForUser(req.session.user_id, urlDatabase);
   const templateVars = { urls: linksToPass, userObject: users[req.session.user_id] };
   res.render("urls_index", templateVars);
 });
 
 app.post("/urls", (req, res) => {
-  console.log("3 - POST /urls")
-  if (users[req.session.user_id] === undefined) {
-    const templateVars = { urls: urlDatabase, userObject: false };
+  if (!req.session.user_id) {
     res.redirect("/login");
     return;
   }
+
   let randomString = generateRandomString();
   urlDatabase[randomString] = { userID: req.session.user_id, longURL: req.body.longURL };
   res.redirect(`/urls/${randomString}`);
 });
 
 app.get("/urls/new", (req, res) => {
-  console.log("4 - GET /urls/new")
-  if (users[req.session.user_id] === undefined) {
-    const templateVars = { urls: urlDatabase, userObject: false };
+  if (!req.session.user_id) {
     res.redirect("/login");
     return;
   }
-
-
   const templateVars = { userObject: users[req.session.user_id] };
-  console.log(templateVars)
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  console.log("5 - GET /urls/:shortURL")
-  if (users[req.session.user_id] === undefined) {
-    const templateVars = { urls: urlDatabase, userObject: false };
+  if (!req.session.user_id) {
     res.redirect("/login");
     return;
   }
+
+  if (req.session.user_id !== urlDatabase[req.params.shortURL].userID) {
+    return res.status(401).send("You are unautherized to do that.");
+  }
+
   const templateVars =
   {
     shortURL: req.params.shortURL,
@@ -95,19 +96,15 @@ app.get("/urls/:shortURL", (req, res) => {
     userObject: users[req.session.user_id]
   };
 
-  console.log(templateVars);
-
   res.render("urls_show", templateVars);
 });
 
 app.get("/register", (req, res) => {
-  console.log("6 - GET /register")
-  const templateVariable = { userObject: users[req.session.user_id] }
+  const templateVariable = { userObject: users[req.session.user_id] };
   res.render("register", templateVariable);
 });
 
 app.post("/register", (req, res) => {
-  console.log("7 - POST /register")
   const emailToAdd = req.body.email;
   const passwordToAdd = req.body.password;
 
@@ -115,7 +112,7 @@ app.post("/register", (req, res) => {
     return res.status(400).send("email or password cannot be blank");
   }
 
-  const userToFind = findUser(emailToAdd);
+  const userToFind = getUserByEmail(emailToAdd, users);
 
   if (userToFind) {
     return res.status(400).send('Email is already in use!');
@@ -134,20 +131,21 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  console.log("8 - POST /urls/:shortURL/delete")
-  console.log(urlDatabase)
+  if (!req.session.user_id) {
+    res.redirect("/login");
+    return;
+  }
+
   if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) {
     return res.status(401).send("You are unautherized to do that.");
   }
 
   delete urlDatabase[req.params.shortURL];
 
-  console.log(urlDatabase)
   res.redirect("/urls");
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  console.log("9 - GET /u/:shortURL")
   const codeToSearch = req.params.shortURL;
 
   if (!urlDatabase[codeToSearch]) {
@@ -159,7 +157,6 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  console.log("10 - POST /urls/:id")
 
   if (urlDatabase[req.params.id].userID !== req.session.user_id) {
     return res.status(401).send("You are unautherized to do that.");
@@ -170,15 +167,14 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  console.log("11 - POST /login")
   const emailToLog = req.body.email;
   const passwordToLog = req.body.password;
 
   if (!emailToLog || !passwordToLog) {
-    return res.status(400).send("email or password cannot be blank");
+    return res.status(400).send("Email or password cannot be blank");
   }
 
-  const userToFind = findUser(emailToLog);
+  const userToFind = getUserByEmail(emailToLog, users);
 
   if (!userToFind) {
     return res.status(403).send('User not found!');
@@ -194,17 +190,13 @@ app.post("/login", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-
-  console.log("12 - GET /login")
-  const templateVariable = { userObject: users[req.session.user_id] }
+  const templateVariable = { userObject: users[req.session.user_id] };
   res.render("login", templateVariable);
 });
 
 app.post("/logout", (req, res) => {
-  console.log("13 - POST /logout")
-  res.clearCookie('session')
-  res.clearCookie('session.sig')
-  // res.clearCookie("user_id");
+  res.clearCookie('session');
+  res.clearCookie('session.sig');
   res.redirect("/login");
 });
 
@@ -224,27 +216,4 @@ const generateRandomString = function () {
     }
   }
   return randomString;
-};
-
-const findUser = function (email) {
-
-  for (const userId in users) {
-    const user = users[userId];
-    if (user.email === email) {
-      return user;
-    }
-  }
-  return false;
-};
-
-const urlsForUser = function (id) {
-
-  let objectToReturn = {};
-
-  for (const siteId in urlDatabase) {
-    if (urlDatabase[siteId].userID === id) {
-      objectToReturn[siteId] = urlDatabase[siteId];
-    }
-  }
-  return objectToReturn;
 };
